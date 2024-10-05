@@ -30,3 +30,6 @@ go.work.sum
 
 # env file
 .env
+
+# Mac folder-attribute file
+.DS_Store
