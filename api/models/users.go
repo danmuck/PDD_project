@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/the_cookie_jar/auth"
 	"github.com/google/uuid"
 	"time"
 )
@@ -12,6 +13,11 @@ type User struct {
 	Org      string `bson:"org" json:"org"`
 	role     role
 	Status   *status `bson:"status,omitempty" json:"status"`
+	HashedPassword string `bson:"hashed_password" "json:"-"`
+	Salt string `bson:"salt" json:"-"`
+	
+	
+	
 }
 
 type role struct {
@@ -57,7 +63,12 @@ func (u *User) GetStatus_String() string {
 }
 
 // constructor -->
-func NewUser(name string) *User {
+func NewUser(name, password string) (*User, error) {
+
+	hashedPassword, salt, err = auth.HashAndSalt(password)
+	if err != nil {
+		return nil, err
+	}	
 	id := uuid.New()
 	s := NewStatus("I'm new here.")
 	u := &User{
@@ -65,9 +76,18 @@ func NewUser(name string) *User {
 		Username: name,
 		Status:   &s,
 		role:     role{s: "default", auth: "nil"},
+		HashedPassword: hashedPassword,
+		Salt:	salt,
 		Org:      "Not Verified",
 	}
+	
 	u.updateStatus("I am new here.")
 
-	return u
+	return u, nil
 }
+
+func (u *User) Authenticate(password string) error {
+	return auth.VerifyPassword (password, u.HashedPassword, u.salt)
+	
+}
+
