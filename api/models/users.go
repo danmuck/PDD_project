@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/the_cookie_jar/auth"
+	"github.com/danmuck/the_cookie_jar/pkg/auth"
 	"github.com/google/uuid"
 	"time"
 )
