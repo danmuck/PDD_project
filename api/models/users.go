@@ -48,23 +48,20 @@ func (u *User) UpdateStatus(s string) {
 }
 
 func (u *User) UpdatePassword(password string) {
-	pw_bytes := []byte(password)
-	hash, err := bcrypt.GenerateFromPassword(pw_bytes, bcrypt.DefaultCost)
-	if err != nil {
+	if !auth.CheckPasswordHash(currentPassword, u.Auth.Hash) {
+		return fmt.Errorf("current password is incorrect")
+	}
+	
+	hashedPassword, err := auth.HashPassword(password){
 		panic(err)
 	}
 
-	err = bcrypt.CompareHashAndPassword(hash, pw_bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	u.Auth.Hash = string(hash)
+	u.Auth.Hash = hashedPassword
+	return nil
 }
 
 func (u *User) VerifyPassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(u.Auth.Hash), []byte(password))
-	return err == nil
+	return auth.CheckPasswordHash(password, u.Auth.Hash)
 }
 
 // use public methods starting with capital letter to interface with private attributes
@@ -81,21 +78,27 @@ func (u *User) GetStatus_String() string {
 }
 
 // constructor -->
-func NewUser(name string, password string) *User {
+func NewUser(name string, password string) (*User, error) {
 	id := uuid.New()
 	s := NewStatus("I'm new here.")
+
+	hashedPassword, err := auth.HashPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
 	u := &User{
 		ID:       id.String(),
 		Username: name,
 		Status:   &s,
-		Auth:     Credentials{Hash: password, Auth: "nil_auth", JWT: "nil_jwt"},
+		Auth:     Credentials{Hash: hashedPassword, Auth: "nil_auth", JWT: "nil_jwt"},
 		Org:      "no organization",
 	}
 
-	status := fmt.Sprintf("I am new so have my -- username: %v password: %v",
+	status := NewStatus("I am new so please be patient with my go skills",
 		u.Username, password)
 
 	u.UpdateStatus(status)
 
-	return u
+	return u, nil
 }
